@@ -13,44 +13,78 @@
     });
   });
 
+
   const form = document.getElementById('bookingForm');
   const result = document.getElementById('formResult');
   const resultText = document.getElementById('resultText');
-  let requestText = '';
-  form.addEventListener('submit', function (event) {
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  const BOL_APPS_SCRIPT_URL =
+    'https://script.google.com/macros/s/AKfycbzdXxeR_I5BCB4-plwlJ-m1HTVjXH4UG4e0Jt3nxYVzRJNIHqoMr18a7A-Np1sonL7-/exec';
+
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
+
     if (!form.reportValidity()) return;
-    const d = new FormData(form);
-    requestText = [
-      'BOL — BANGALORE ONLINE LAUNDRY SERVICE — PICKUP REQUEST',
-      'Name: ' + d.get('name'),
-      'Mobile: ' + d.get('phone'),
-      'PIN code: ' + d.get('pin'),
-      'Service: ' + d.get('service'),
-      'Preferred pickup: ' + d.get('date') + ' / ' + d.get('time'),
-      'Address: ' + d.get('address'),
-      'Notes: ' + (d.get('notes') || 'None'),
-      '',
-      'Status: Request only — awaiting BOL confirmation.'
-    ].join('\n');
-    resultText.textContent = requestText + '\n\nPreview only: details have not been sent or saved.';
-    result.classList.add('show');
-    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });
-  document.getElementById('copyRequest').addEventListener('click', async function () {
-    const btn = this;
+
+    const formData = new FormData(form);
+
+    const payload = {
+      name: String(formData.get('name') || '').trim(),
+      phone: String(formData.get('phone') || '').trim(),
+      pin: String(formData.get('pin') || '').trim(),
+      service: String(formData.get('service') || '').trim(),
+      date: String(formData.get('date') || '').trim(),
+      time: String(formData.get('time') || '').trim(),
+      address: String(formData.get('address') || '').trim(),
+      notes: String(formData.get('notes') || '').trim(),
+      consent: document.getElementById('consent').checked,
+      website: String(formData.get('website') || '')
+    };
+
+    if (payload.website) return;
+
+    if (!BOL_APPS_SCRIPT_URL.includes('/exec')) {
+      result.classList.add('show');
+      result.querySelector('h3').textContent =
+        'Setup incomplete';
+      resultText.textContent =
+        'The booking form is not connected yet. Please contact BOL directly.';
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sending request…';
+
     try {
-      await navigator.clipboard.writeText(requestText);
-      btn.textContent = 'Copied to clipboard ✓';
+      await fetch(BOL_APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      result.classList.add('show');
+      result.querySelector('h3').textContent =
+        'Request submitted for processing';
+      resultText.textContent =
+        'Your request was sent for processing. This page cannot verify receipt. BOL must confirm availability, price and pickup time before your booking is confirmed.';
+
+      form.reset();
     } catch (error) {
-      const range = document.createRange();
-      range.selectNodeContents(resultText);
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-      btn.textContent = 'Select the text above to copy';
+      result.classList.add('show');
+      result.querySelector('h3').textContent =
+        'Could not submit';
+      resultText.textContent =
+        'Please try again later or contact BOL directly. Your pickup is not confirmed.';
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Prepare pickup request →';
     }
   });
+
 
   document.querySelectorAll('[data-policy]').forEach(function (link) {
     link.addEventListener('click', function (event) {

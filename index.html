@@ -113,6 +113,9 @@
           </div>
           <label class="consent"><input type="checkbox" id="consent" required><span>I agree that BOL Laundry Services may contact me about this pickup request by phone, SMS or WhatsApp. Marketing messages should require separate, optional consent.</span></label>
           <button class="btn btn-primary form-submit" type="submit">Prepare pickup request <span aria-hidden="true">→</span></button>
+          <div style="position:absolute;left:-10000px" aria-hidden="true">
+            <label> Leave this empty <input name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
           <div class="form-note">Preview mode: this form does not send or store your details. Connect it to your business email/Google Sheet or booking system before going live.</div>
           <div class="result" id="formResult" aria-live="polite"><h3>Request details prepared</h3><p id="resultText"></p><button class="btn btn-outline" type="button" id="copyRequest">Copy request details</button></div>
         </form>
